@@ -37,7 +37,7 @@ while True:
         img_info = json.loads(data.get('data-preview'))
         ID = img_info['id']
 
-        # 如果有動圖就從動圖檔(apng[檔名一樣是.png])
+        # 如果有動圖就存動圖檔(apng[檔名一樣是.png])
         if img_info['animationUrl']:
             img_file = requests.get(img_info['animationUrl'])
             animate = True
