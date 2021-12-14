@@ -1,3 +1,5 @@
 *.ini
 /__pycache__
 /build
+*.gif
+*.png
