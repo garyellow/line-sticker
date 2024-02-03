@@ -5,6 +5,7 @@ import os
 import apnggif
 import bs4
 import requests
+from moviepy.editor import *
 
 while True:
     number = input('輸入貼圖編號：')
@@ -20,6 +21,8 @@ while True:
     now_dir = image_dir + number
     png_dir = now_dir + '/png/'
     gif_dir = now_dir + '/gif/'
+    sound_dir = now_dir + '/sound/'
+    output_dir = now_dir + '/output/'
 
     # 建資料夾
     if not os.path.exists(image_dir):
@@ -30,7 +33,7 @@ while True:
         os.mkdir(png_dir)
 
     # 下載貼圖
-    Data = soup.find_all('li', {'class': 'mdCMN09Li FnStickerPreviewItem'})
+    Data = soup.select('li[class*="mdCMN09Li FnStickerPreviewItem"]')
     count = 0
     for data in Data:
         # 將字串資料轉換為字典
@@ -41,11 +44,23 @@ while True:
         if img_info['animationUrl']:
             img_file = requests.get(img_info['animationUrl'])
             animate = True
+            sound=False
             if not os.path.exists(gif_dir):
                 os.mkdir(gif_dir)
+        #如果是有音檔的動圖
+        elif img_info['popupUrl']:
+            img_file = requests.get(img_info['popupUrl'])
+            animate = True
+            sound=True
+            if not os.path.exists(gif_dir):
+                os.mkdir(gif_dir)
+            sound_file=requests.get(img_info['soundUrl'])
+            if not os.path.exists(sound_dir):
+                os.mkdir(sound_dir)
         else:
             img_file = requests.get(img_info['staticUrl'])
             animate = False
+            sound=False
 
         # 儲存的路徑和主檔名
         png_path = os.path.join(png_dir, ID)
@@ -58,6 +73,18 @@ while True:
         if animate:
             gif_path = os.path.join(gif_dir, ID)
             apnggif.apnggif(png_path + '.png', gif_path + '.gif')
+        if sound:
+            sound_path = os.path.join(sound_dir, ID)
+            with open(sound_path + '.m4a', 'wb') as f:
+                f.write(sound_file.content)
+            gif_clip = VideoFileClip(gif_path + '.gif')
+            audio_clip = AudioFileClip(sound_path + '.m4a')
+            gif_clip = gif_clip.set_audio(audio_clip)
+            if not os.path.exists(output_dir):
+                os.mkdir(output_dir)
+            output_file = os.path.join(output_dir, ID + ".mp4")
+            gif_clip.write_videofile(output_file, codec="libx264", audio_codec="aac")
+
 
         if not count and animate:
             print('此貼圖為動圖，將順便另存為gif檔')
